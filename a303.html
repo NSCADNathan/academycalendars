@@ -1,0 +1,512 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academy Campus Fall Schedule</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 20px;
+            background: #e8e8e8;
+            color: #333;
+            min-height: 100vh;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2em;
+            margin: 0;
+            letter-spacing: 3px;
+            color: #2c5530;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+        }
+        
+        .header p {
+            font-size: 0.9em;
+            color: #666;
+            margin: 10px 0;
+        }
+        
+        .calendar-container {
+            display: grid;
+            grid-template-columns: 100px repeat(5, 1fr);
+            gap: 2px;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .time-header, .day-header {
+            background: rgba(44, 85, 48, 0.1);
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            border: 1px solid rgba(44, 85, 48, 0.2);
+            font-size: 0.9em;
+            color: #2c5530;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .time-header {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            font-size: 2.2em;
+            white-space: nowrap;
+            transform: rotate(180deg);
+            font-weight: 900;
+            font-family: 'Arial Black', 'Helvetica', sans-serif;
+            color: transparent;
+            -webkit-text-stroke: 2px #2c5530;
+            text-stroke: 2px #2c5530;
+        }
+        
+        .day-header {
+            background: rgba(70, 130, 180, 0.1);
+            border-color: rgba(70, 130, 180, 0.2);
+            color: #4682b4;
+        }
+        
+        .time-slot {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            min-height: 120px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .time-slot:hover {
+            background: rgba(240, 240, 240, 0.9);
+            border-color: rgba(0, 0, 0, 0.2);
+        }
+        
+        .class-block {
+            background: linear-gradient(45deg, var(--room-color), var(--room-color-dark));
+            border-radius: 4px;
+            padding: 6px;
+            margin: 2px 0;
+            border-left: 3px solid var(--room-accent);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .class-block:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+        
+        .class-title {
+            font-size: 0.8em;
+            color: white;
+            margin-top: 2px;
+            line-height: 1.2;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            font-weight: 900;
+            font-family: 'Arial Black', 'Helvetica', sans-serif;
+            text-align: center;
+        }
+        
+        .sections-indicator {
+            font-size: 0.5em;
+            color: white;
+            margin-top: 2px;
+            font-style: italic;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+        
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, #f8f8f8, #ffffff);
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid rgba(44, 85, 48, 0.3);
+            border-radius: 10px;
+            width: 80%;
+            max-width: 500px;
+            color: #333;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c5530;
+        }
+        
+        .close {
+            color: #666;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        
+        .close:hover {
+            color: #333;
+        }
+        
+        .modal-section {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 5px;
+            border-left: 3px solid var(--section-color, #2c5530);
+        }
+        
+        .section-header {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #4682b4;
+        }
+        
+        .enrollment-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 5px 0;
+        }
+        
+        .enrollment-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2c5530, #4682b4);
+            transition: width 0.3s ease;
+        }
+        
+        /* Room color coding - Official Academy Campus Colors */
+        .room-A001 { --room-color: #a8c8a0; --room-color-dark: #8bb283; --room-accent: #bdd4b5; }  /* Hearty Hosta */
+        .room-A002 { --room-color: #f0d844; --room-color-dark: #d4c13a; --room-accent: #f5e666; }  /* Canary Yellow */
+        .room-A201 { --room-color: #4a1c5c; --room-color-dark: #3b1649; --room-accent: #5e2470; }  /* Regal Purple */
+        .room-A206 { --room-color: #b87333; --room-color-dark: #9c6229; --room-accent: #cc8847; }  /* Ginger Spice */
+        .room-A208 { --room-color: #d4a017; --room-color-dark: #b88a13; --room-accent: #e8b42b; }  /* Egyptian Sun */
+        .room-A303 { --room-color: #a8d8f0; --room-color-dark: #8cc8e6; --room-accent: #bee3f5; }  /* Fresh Water Blue */
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 40px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 0.9em;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            border: 2px solid rgba(0, 0, 0, 0.2);
+        }
+        
+        .stats {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.8em;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .calendar-container {
+                grid-template-columns: 80px repeat(5, 1fr);
+                gap: 1px;
+                padding: 10px;
+            }
+            
+            .class-title, .sections-indicator {
+                font-size: 0.4em;
+                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
+            }
+            
+            .time-slot {
+                min-height: 80px;
+                padding: 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ACADEMY CAMPUS FALL SCHEDULE</h1>
+        <p>6 rooms • 3 time blocks • 30 classes</p>
+        
+        <div class="legend" id="legend">
+            <!-- Legend will be populated by JavaScript -->
+        </div>
+    </div>
+    
+    <div class="calendar-container" id="calendar">
+        <!-- Calendar will be populated by JavaScript -->
+    </div>
+    
+    <div class="stats">
+        <p>Each color represents a room's territorial claim on time • Click entries to explore enrollment and instructor details</p>
+    </div>
+
+    <!-- Modal for class details -->
+    <div id="classModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">Class Details</div>
+                <span class="close" id="closeModal">&times;</span>
+            </div>
+            <div id="modalBody">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Complete Academy Campus schedule data with correct instructor names
+        const scheduleData = [
+            {"course": "AHIS-2800-1X", "title": "Film Hist & Crit: 1890-1945", "day": "Thursday", "startTime": "8:30AM", "endTime": "12:30PM", "room": "A208", "capacity": 40, "enrolled": 12, "waitlisted": 0, "instructor": "Darrell Varga", "email": "dvarga@nscad.ca", "matFee": null},
+            {"course": "AHIS-2820-1X", "title": "History of Animation", "day": "Tuesday", "startTime": "8:30AM", "endTime": "12:30PM", "room": "A208", "capacity": 40, "enrolled": 16, "waitlisted": 0, "instructor": "Rebecca Barker", "email": "bbarker@nscad.ca", "matFee": null},
+            {"course": "FHIS-2800-1X", "title": "Film Hist & Crit: 1890-1945", "day": "Thursday", "startTime": "8:30AM", "endTime": "12:30PM", "room": "A208", "capacity": 40, "enrolled": 15, "waitlisted": 0, "instructor": "Darrell Varga", "email": "dvarga@nscad.ca", "matFee": null},
+            {"course": "FHIS-2820-1X", "title": "History of Animation", "day": "Tuesday", "startTime": "8:30AM", "endTime": "12:30PM", "room": "A208", "capacity": 40, "enrolled": 2, "waitlisted": 0, "instructor": "Rebecca Barker", "email": "bbarker@nscad.ca", "matFee": null},
+            {"course": "FILM-1000-1", "title": "Moving Image", "day": "Tuesday", "startTime": "8:30AM", "endTime": "12:30PM", "room": "A001", "capacity": 14, "enrolled": 14, "waitlisted": 3, "instructor": "Christopher Spencer-Lowe", "email": "cslowe@nscad.ca", "matFee": null},
+            {"course": "FILM-1000-1", "title": "Moving Image", "day": "Tuesday", "startTime": "8:30AM", "endTime": "12:30PM", "room": "A206", "capacity": 14, "enrolled": 14, "waitlisted": 3, "instructor": "Christopher Spencer-Lowe", "email": "cslowe@nscad.ca", "matFee": null},
+            {"course": "FILM-1000-2", "title": "Moving Image", "day": "Wednesday", "startTime": "1:30PM", "endTime": "5:30PM", "room": "A001", "capacity": 14, "enrolled": 14, "waitlisted": 2, "instructor": "Carlos Cabrera Blazquez", "email": "acabrera@nscad.ca", "matFee": null},
+            {"course": "FILM-1000-2", "title": "Moving Image", "day": "Wednesday", "startTime": "1:30PM", "endTime": "5:30PM", "room": "A206", "capacity": 14, "enrolled": 14, "waitlisted": 2, "instructor": "Carlos Cabrera Blazquez", "email": "acabrera@nscad.ca", "matFee": null},
+            {"course": "FILM-2220-1X", "title": "Introductory Animation", "day": "Friday", "startTime": "8:30AM", "endTime": "12:30PM", "room": "A001", "capacity": 14, "enrolled": 13, "waitlisted": 6, "instructor": "Jenna Marks", "email": "jennamarks@nscad.ca", "matFee": 35},
+            {"course": "FILM-2220-1X", "title": "Introductory Animation", "day": "Friday", "startTime": "8:30AM", "endTime": "12:30PM", "room": "A002", "capacity": 14, "enrolled": 13, "waitlisted": 6, "instructor": "Jenna Marks", "email": "jennamarks@nscad.ca", "matFee": 35},
+            {"course": "FILM-2501-1", "title": "Introductory Filmmaking", "day": "Monday", "startTime": "8:30AM", "endTime": "12:30PM", "room": "A001", "capacity": 14, "enrolled": 14, "waitlisted": 2, "instructor": "Marcia Connolly", "email": "mlconnolly@nscad.ca", "matFee": 50},
+            {"course": "FILM-2501-1", "title": "Introductory Filmmaking", "day": "Monday", "startTime": "8:30AM", "endTime": "12:30PM", "room": "A206", "capacity": 14, "enrolled": 14, "waitlisted": 2, "instructor": "Marcia Connolly", "email": "mlconnolly@nscad.ca", "matFee": 50},
+            {"course": "FILM-3101-1", "title": "Animation Studio 1", "day": "Monday", "startTime": "1:00PM", "endTime": "5:00PM", "room": "A001", "capacity": 14, "enrolled": 4, "waitlisted": 0, "instructor": "Rebecca Barker", "email": "bbarker@nscad.ca", "matFee": null},
+            {"course": "FILM-3101-1", "title": "Animation Studio 1", "day": "Thursday", "startTime": "1:00PM", "endTime": "5:00PM", "room": "A001", "capacity": 14, "enrolled": 4, "waitlisted": 0, "instructor": "Rebecca Barker", "email": "bbarker@nscad.ca", "matFee": null},
+            {"course": "FILM-3101-1", "title": "Animation Studio 1", "day": "Monday", "startTime": "1:00PM", "endTime": "5:00PM", "room": "A002", "capacity": 14, "enrolled": 4, "waitlisted": 0, "instructor": "Rebecca Barker", "email": "bbarker@nscad.ca", "matFee": null},
+            {"course": "FILM-3101-1", "title": "Animation Studio 1", "day": "Thursday", "startTime": "1:00PM", "endTime": "5:00PM", "room": "A002", "capacity": 14, "enrolled": 4, "waitlisted": 0, "instructor": "Rebecca Barker", "email": "bbarker@nscad.ca", "matFee": null},
+            {"course": "FILM-3101-1", "title": "Animation Studio 1", "day": "Monday", "startTime": "1:00PM", "endTime": "5:00PM", "room": "A206", "capacity": 14, "enrolled": 4, "waitlisted": 0, "instructor": "Rebecca Barker", "email": "bbarker@nscad.ca", "matFee": null},
+            {"course": "FILM-3101-1", "title": "Animation Studio 1", "day": "Thursday", "startTime": "1:00PM", "endTime": "5:00PM", "room": "A206", "capacity": 14, "enrolled": 4, "waitlisted": 0, "instructor": "Rebecca Barker", "email": "bbarker@nscad.ca", "matFee": null},
+            {"course": "FILM-3300-1", "title": "Screenwriting Studio", "day": "Wednesday", "startTime": "1:00PM", "endTime": "5:00PM", "room": "A208", "capacity": 14, "enrolled": 9, "waitlisted": 0, "instructor": "Josh MacDonald", "email": "jwmacdonald@nscad.ca", "matFee": null},
+            {"course": "FILM-3345-1", "title": "Digital Post Production", "day": "Wednesday", "startTime": "8:30AM", "endTime": "12:30PM", "room": "A001", "capacity": 14, "enrolled": 10, "waitlisted": 0, "instructor": "Christopher Spencer-Lowe", "email": "cslowe@nscad.ca", "matFee": null},
+            {"course": "FILM-3345-1", "title": "Digital Post Production", "day": "Wednesday", "startTime": "8:30AM", "endTime": "12:30PM", "room": "A208", "capacity": 14, "enrolled": 10, "waitlisted": 0, "instructor": "Christopher Spencer-Lowe", "email": "cslowe@nscad.ca", "matFee": null},
+            {"course": "FILM-3400-1", "title": "Film 1", "day": "Tuesday", "startTime": "1:00PM", "endTime": "5:00PM", "room": "A206", "capacity": 16, "enrolled": 10, "waitlisted": 0, "instructor": "Sam Fisher", "email": "sfisher@nscad.ca", "matFee": 200},
+            {"course": "FILM-3400-1", "title": "Film 1", "day": "Friday", "startTime": "1:00PM", "endTime": "5:00PM", "room": "A206", "capacity": 16, "enrolled": 10, "waitlisted": 0, "instructor": "Sam Fisher", "email": "sfisher@nscad.ca", "matFee": 200},
+            {"course": "FILM-4000-1", "title": "Film 3", "day": "Tuesday", "startTime": "1:00PM", "endTime": "5:00PM", "room": "A208", "capacity": 16, "enrolled": 7, "waitlisted": 0, "instructor": "Solomon Nagler", "email": "snagler@nscad.ca", "matFee": null},
+            {"course": "FILM-4000-1", "title": "Film 3", "day": "Friday", "startTime": "1:00PM", "endTime": "5:00PM", "room": "A208", "capacity": 16, "enrolled": 7, "waitlisted": 0, "instructor": "Solomon Nagler", "email": "snagler@nscad.ca", "matFee": null},
+            {"course": "MDIA-1000-1", "title": "Expanded Media", "day": "Thursday", "startTime": "8:30AM", "endTime": "12:30PM", "room": "A201", "capacity": 16, "enrolled": 16, "waitlisted": 1, "instructor": "Jordan Bennett", "email": "jbennett@nscad.ca", "matFee": null},
+            {"course": "MDIA-2220-1X", "title": "Introductory Animation", "day": "Friday", "startTime": "8:30AM", "endTime": "12:30PM", "room": "A001", "capacity": 14, "enrolled": 1, "waitlisted": 1, "instructor": "Jenna Marks", "email": "jennamarks@nscad.ca", "matFee": 35},
+            {"course": "MDIA-2220-1X", "title": "Introductory Animation", "day": "Friday", "startTime": "8:30AM", "endTime": "12:30PM", "room": "A002", "capacity": 14, "enrolled": 1, "waitlisted": 1, "instructor": "Jenna Marks", "email": "jennamarks@nscad.ca", "matFee": 35},
+            {"course": "MDIA-2410-1", "title": "Introduction to Sound Art", "day": "Thursday", "startTime": "8:30AM", "endTime": "12:30PM", "room": "A001", "capacity": 14, "enrolled": 11, "waitlisted": 0, "instructor": "Christopher Spencer-Lowe", "email": "cslowe@nscad.ca", "matFee": null},
+            {"course": "MDIA-2551-1", "title": "Wksp: Physical Computing", "day": "Monday", "startTime": "1:00PM", "endTime": "5:00PM", "room": "A201", "capacity": 16, "enrolled": 13, "waitlisted": 0, "instructor": "Nathan Ryan", "email": "nryan@nscad.ca", "matFee": 125},
+            {"course": "MDIA-2701-1", "title": "Expanded Media Toolbox", "day": "Friday", "startTime": "1:00PM", "endTime": "5:00PM", "room": "A201", "capacity": 16, "enrolled": 8, "waitlisted": 0, "instructor": "David Clark", "email": "dclark@nscad.ca", "matFee": null},
+            {"course": "MDIA-2701-1", "title": "Expanded Media Toolbox", "day": "Friday", "startTime": "1:00PM", "endTime": "5:00PM", "room": "A001", "capacity": 16, "enrolled": 8, "waitlisted": 0, "instructor": "David Clark", "email": "dclark@nscad.ca", "matFee": null},
+            {"course": "MDIA-3058-1", "title": "Sem: Art Now", "day": "Friday", "startTime": "8:30AM", "endTime": "12:30PM", "room": "A303", "capacity": 16, "enrolled": 3, "waitlisted": 0, "instructor": "Jordan Bennett", "email": "jbennett@nscad.ca", "matFee": null},
+            {"course": "MDIA-3220-1", "title": "Expanded Media Projects", "day": "Tuesday", "startTime": "1:00PM", "endTime": "5:00PM", "room": "A303", "capacity": 16, "enrolled": 6, "waitlisted": 0, "instructor": "David Clark", "email": "dclark@nscad.ca", "matFee": null},
+            {"course": "MDIA-3220-1", "title": "Expanded Media Projects", "day": "Thursday", "startTime": "1:00PM", "endTime": "5:00PM", "room": "A303", "capacity": 16, "enrolled": 6, "waitlisted": 0, "instructor": "David Clark", "email": "dclark@nscad.ca", "matFee": null},
+            {"course": "MDIA-3230-1", "title": "Interdisc: Idea & Process", "day": "Monday", "startTime": "8:30AM", "endTime": "12:30PM", "room": "A201", "capacity": 16, "enrolled": 16, "waitlisted": 0, "instructor": "Anna Sprague", "email": "asprague@nscad.ca", "matFee": null},
+            {"course": "MDIA-3230-1", "title": "Interdisc: Idea & Process", "day": "Wednesday", "startTime": "8:30AM", "endTime": "12:30PM", "room": "A201", "capacity": 16, "enrolled": 16, "waitlisted": 0, "instructor": "Anna Sprague", "email": "asprague@nscad.ca", "matFee": null}
+        ];
+
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        const timeSlots = [
+            { label: '8:30AM-12:30PM', start: '8:30AM', end: '12:30PM' },
+            { label: '1:00PM-5:00PM', start: '1:00PM', end: '5:00PM' },
+            { label: '1:30PM-5:30PM', start: '1:30PM', end: '5:30PM' }
+        ];
+        
+        const rooms = ['A001', 'A002', 'A201', 'A206', 'A208', 'A303'];
+
+        // Group classes by title, room, day, time, and instructor to collapse sections
+        function groupClasses() {
+            const grouped = {};
+            
+            scheduleData.forEach(cls => {
+                // Use title, room, day, time, and instructor as the key to group identical classes
+                const key = `${cls.title}-${cls.room}-${cls.day}-${cls.startTime}-${cls.instructor}`;
+                if (!grouped[key]) {
+                    grouped[key] = {
+                        title: cls.title,
+                        room: cls.room,
+                        day: cls.day,
+                        startTime: cls.startTime,
+                        endTime: cls.endTime,
+                        instructor: cls.instructor,
+                        sections: []
+                    };
+                }
+                grouped[key].sections.push(cls);
+            });
+            
+            return Object.values(grouped);
+        }
+
+        function showClassDetails(groupedClass) {
+            const modal = document.getElementById('classModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+            
+            modalTitle.textContent = `${groupedClass.title} - Room ${groupedClass.room}`;
+            
+            let modalContent = `
+                <div style="margin-bottom: 15px;">
+                    <strong>Time:</strong> ${groupedClass.startTime} - ${groupedClass.endTime}<br>
+                    <strong>Day:</strong> ${groupedClass.day}<br>
+                    <strong>Instructor:</strong> ${groupedClass.instructor}
+                </div>
+            `;
+            
+            groupedClass.sections.forEach((section, index) => {
+                const enrollmentPercent = (section.enrolled / section.capacity) * 100;
+                const sectionColors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3'];
+                const sectionColor = sectionColors[index % sectionColors.length];
+                
+                modalContent += `
+                    <div class="modal-section" style="--section-color: ${sectionColor};">
+                        <div class="section-header">${section.course}</div>
+                        <div><strong>Enrollment:</strong> ${section.enrolled}/${section.capacity} students</div>
+                        ${section.waitlisted > 0 ? `<div><strong>Waitlisted:</strong> ${section.waitlisted}</div>` : ''}
+                        ${section.matFee ? `<div><strong>Material Fee:</strong> $${section.matFee}</div>` : ''}
+                        <div class="enrollment-bar">
+                            <div class="enrollment-fill" style="width: ${Math.min(enrollmentPercent, 100)}%"></div>
+                        </div>
+                        <div style="font-size: 0.8em; opacity: 0.8;">
+                            ${enrollmentPercent.toFixed(0)}% capacity
+                        </div>
+                    </div>
+                `;
+            });
+            
+            modalBody.innerHTML = modalContent;
+            modal.style.display = 'block';
+        }
+
+        function createCalendar() {
+            const calendar = document.getElementById('calendar');
+            const groupedClasses = groupClasses();
+            
+            // Empty corner cell
+            calendar.innerHTML = '<div class="time-header"></div>';
+            
+            // Day headers
+            days.forEach(day => {
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'day-header';
+                dayHeader.textContent = day.toUpperCase();
+                calendar.appendChild(dayHeader);
+            });
+            
+            // Time slots
+            timeSlots.forEach(timeSlot => {
+                // Time label
+                const timeHeader = document.createElement('div');
+                timeHeader.className = 'time-header';
+                timeHeader.textContent = timeSlot.label;
+                calendar.appendChild(timeHeader);
+                
+                // Day columns for this time slot
+                days.forEach(day => {
+                    const daySlot = document.createElement('div');
+                    daySlot.className = 'time-slot';
+                    
+                    // Find grouped classes for this day and time
+                    const classesInSlot = groupedClasses.filter(cls => 
+                        cls.day === day && 
+                        cls.startTime === timeSlot.start && 
+                        cls.endTime === timeSlot.end
+                    );
+                    
+                    classesInSlot.forEach(groupedClass => {
+                        const classBlock = document.createElement('div');
+                        classBlock.className = `class-block room-${groupedClass.room}`;
+                        
+                        const sectionCount = groupedClass.sections.length;
+                        const totalEnrolled = groupedClass.sections.reduce((sum, s) => sum + s.enrolled, 0);
+                        
+                        classBlock.innerHTML = `
+                            <div class="class-title">${groupedClass.title}</div>
+                            ${sectionCount > 1 ? `<div class="sections-indicator">${sectionCount} sections • ${totalEnrolled} students</div>` : `<div class="sections-indicator">${totalEnrolled} students</div>`}
+                        `;
+                        
+                        classBlock.style.cursor = 'pointer';
+                        classBlock.addEventListener('click', () => showClassDetails(groupedClass));
+                        
+                        daySlot.appendChild(classBlock);
+                    });
+                    
+                    calendar.appendChild(daySlot);
+                });
+            });
+        }
+        
+        function createLegend() {
+            const legend = document.getElementById('legend');
+            const roomColors = {
+                'A001': '#a8c8a0',  // Hearty Hosta
+                'A002': '#f0d844',  // Canary Yellow
+                'A201': '#4a1c5c',  // Regal Purple
+                'A206': '#b87333',  // Ginger Spice
+                'A208': '#d4a017',  // Egyptian Sun
+                'A303': '#a8d8f0'   // Fresh Water Blue
+            };
+            
+            rooms.forEach(room => {
+                const legendItem = document.createElement('div');
+                legendItem.className = 'legend-item';
+                legendItem.style.backgroundColor = roomColors[room];
+                legendItem.textContent = room;
+                legend.appendChild(legendItem);
+            });
+        }
+        
+        // Modal functionality
+        function setupModal() {
+            const modal = document.getElementById('classModal');
+            const closeBtn = document.getElementById('closeModal');
+            
+            closeBtn.onclick = function() {
+                modal.style.display = 'none';
+            }
+            
+            window.onclick = function(event) {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            }
+        }
+        
+        // Initialize the calendar
+        createCalendar();
+        createLegend();
+        setupModal();
+    </script>
+</body>
+</html>
